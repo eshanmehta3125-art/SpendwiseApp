@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#74b4fd",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-container": "#fffbff",
+                        "surface": "#f9f9ff",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary-fixed-variant": "#763400",
+                        "primary-fixed-dim": "#a2c9ff",
+                        "tertiary-fixed": "#ffdbc9",
+                        "tertiary": "#964400",
+                        "on-primary-container": "#fdfcff",
+                        "on-tertiary-fixed": "#321200",
+                        "outline-variant": "#c1c6d5",
+                        "primary": "#005ea4",
+                        "surface-variant": "#e2e2e8",
+                        "secondary": "#0461a4",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f3f3f9",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191c20",
+                        "surface-container": "#ededf4",
+                        "surface-tint": "#0060a8",
+                        "on-secondary-fixed-variant": "#00497e",
+                        "on-error-container": "#93000a",
+                        "on-background": "#191c20",
+                        "inverse-primary": "#a2c9ff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#004578",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#bd5700",
+                        "surface-dim": "#d9d9e0",
+                        "secondary-fixed-dim": "#9fcaff",
+                        "outline": "#717785",
+                        "on-surface-variant": "#414753",
+                        "surface-container-high": "#e7e8ee",
+                        "on-primary-fixed-variant": "#004881",
+                        "on-primary-fixed": "#001c38",
+                        "background": "#f9f9ff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb68c",
+                        "primary-fixed": "#d3e4ff",
+                        "inverse-surface": "#2e3035",
+                        "on-secondary-fixed": "#001d36",
+                        "primary-container": "#0077ce",
+                        "secondary-fixed": "#d2e4ff",
+                        "inverse-on-surface": "#f0f0f7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .bg-vibrant-gradient {
+            background: radial-gradient(circle at 0% 0%, #8CE4FF 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, #FEEE91 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, #0077ce 0%, transparent 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar (As per Shared Components JSON) -->
+<header class="bg-white dark:bg-[#272727] flex justify-between items-center w-full px-6 py-4 fixed top-0 z-50">
+<div class="text-xl font-black text-[#8CE4FF] font-['Inter'] tracking-tight">
+            ExpenseManager
+        </div>
+<button class="text-[#272727] dark:text-gray-400 font-['Inter'] font-bold text-lg tracking-tight hover:opacity-80 transition-opacity Active: scale-95 duration-150">
+            Skip
+        </button>
+</header>
+<!-- Main Canvas Content -->
+<main class="flex-grow flex flex-col items-center justify-center px-6 pt-20 pb-12 relative overflow-hidden">
+<!-- Decorative Background Elements -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-secondary-container opacity-20 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -left-24 w-96 h-96 bg-primary-container opacity-10 rounded-full blur-3xl"></div>
+<!-- Onboarding Illustration Section (Asymmetric Bento-ish Style) -->
+<div class="relative w-full max-w-lg mb-12">
+<div class="grid grid-cols-6 grid-rows-6 gap-4 h-[400px]">
+<!-- Successful Transaction Card -->
+<div class="col-span-3 row-span-3 glass-card rounded-lg flex flex-col items-center justify-center p-6 shadow-xl transform -rotate-3">
+<div class="bg-primary-container p-4 rounded-full mb-3 text-on-primary-container">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="font-bold text-primary-container text-sm">Success</span>
+<span class="text-on-surface-variant text-xs mt-1">Payment Received</span>
+</div>
+<!-- Growth Illustration Card -->
+<div class="col-span-3 row-span-4 bg-primary-container rounded-lg flex flex-col items-end justify-between p-6 shadow-2xl relative overflow-hidden transform rotate-2">
+<img alt="Financial growth chart" class="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" data-alt="Modern abstract 3D visualization of a rising financial growth arrow with vibrant blue and yellow highlights on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIQ4PBk8RaFHNYrN4F-nIRnb4yPxN1qLnjpFAXx1I18MIjXBQd92fTNLh84Fbz2-Eb4BvwdzianVY9OwE9xKyQc8lOvzflRTKom9jTMOStJJpYBCy5fnd9wQG_myyALrPYMkV_Rxt4qoYRNhiYXeFoSxb66H_89Rkc3-jn5-qhEnhwTegd9ncd9Gudc5lBOBqeNX_98OCHm4rWk_A1NQzhIGEgSk60QGcS7R4qRp5917XhcMA-Q-6xzTxjd9TjG0l3OHTG-uO66kk"/>
+<div class="z-10 bg-surface-container-lowest p-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="z-10 text-right">
+<h3 class="text-on-primary-container font-black text-3xl leading-tight">124%</h3>
+<p class="text-on-primary-container/80 text-sm">Portfolio Growth</p>
+</div>
+</div>
+<!-- Small Icon Accents -->
+<div class="col-span-2 row-span-2 bg-secondary-container/30 rounded-lg backdrop-blur-sm flex items-center justify-center shadow-lg transform translate-y-4">
+<span class="material-symbols-outlined text-secondary text-3xl">account_balance_wallet</span>
+</div>
+<div class="col-span-4 row-span-2 glass-card rounded-lg flex items-center px-6 gap-4 shadow-lg transform -translate-y-2">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">savings</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-xs uppercase tracking-widest text-on-surface-variant">Active Goal</span>
+<span class="text-on-surface font-bold">Dream Home</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center max-w-md space-y-4">
+<h1 class="text-4xl font-black text-on-surface tracking-tight leading-tight">
+                Ready to Start?
+            </h1>
+<p class="text-on-surface-variant text-lg leading-relaxed px-4">
+                You're all set to take control of your financial future. Let's make every cent count toward your dreams.
+            </p>
+</div>
+<!-- Progress Dots (5/5) -->
+<div class="flex gap-2 mt-8 mb-10">
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+<div class="h-2 w-8 rounded-full bg-primary-container"></div>
+</div>
+<!-- Action Button -->
+<div class="w-full max-w-xs px-6">
+<button class="w-full bg-primary-container text-on-primary-container py-5 rounded-full font-bold text-xl shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-3">
+                Get Started
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Sub-page indication footer (Safe Area) -->
+<footer class="pb-8 pt-4 flex justify-center">
+<div class="w-32 h-1.5 bg-outline-variant/30 rounded-full"></div>
+</footer>
+</body></html>

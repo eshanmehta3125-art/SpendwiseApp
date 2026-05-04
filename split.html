@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WealthFlow - Split Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#414753",
+            "primary-fixed-dim": "#a2c9ff",
+            "error-container": "#ffdad6",
+            "outline-variant": "#c1c6d5",
+            "on-surface": "#191c20",
+            "secondary-fixed-dim": "#9fcaff",
+            "on-primary-fixed-variant": "#004881",
+            "background": "#f9f9ff",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#2e3035",
+            "surface-container-lowest": "#ffffff",
+            "inverse-primary": "#a2c9ff",
+            "on-primary-container": "#fdfcff",
+            "surface-container-highest": "#e2e2e8",
+            "on-secondary-container": "#004578",
+            "tertiary-fixed": "#ffdbc9",
+            "primary": "#005ea4",
+            "secondary-fixed": "#d2e4ff",
+            "secondary-container": "#74b4fd",
+            "on-tertiary": "#ffffff",
+            "inverse-on-surface": "#f0f0f7",
+            "surface-container-low": "#f3f3f9",
+            "on-primary-fixed": "#001c38",
+            "tertiary-container": "#bd5700",
+            "tertiary-fixed-dim": "#ffb68c",
+            "surface-bright": "#f9f9ff",
+            "outline": "#717785",
+            "on-tertiary-container": "#fffbff",
+            "error": "#ba1a1a",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#0060a8",
+            "on-secondary-fixed-variant": "#00497e",
+            "on-background": "#191c20",
+            "on-secondary-fixed": "#001d36",
+            "primary-fixed": "#d3e4ff",
+            "tertiary": "#964400",
+            "primary-container": "#0077ce",
+            "surface-dim": "#d9d9e0",
+            "on-tertiary-fixed": "#321200",
+            "on-error-container": "#93000a",
+            "surface-container": "#ededf4",
+            "on-error": "#ffffff",
+            "surface": "#f9f9ff",
+            "surface-variant": "#e2e2e8",
+            "secondary": "#0461a4",
+            "surface-container-high": "#e7e8ee",
+            "on-tertiary-fixed-variant": "#763400"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline": ["Inter"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-100 dark:border-zinc-800 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="close-up portrait of a professional man with a friendly smile in a bright modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA1tAl8VsaMKTFx8lWbGihQKFqc_PkRuyBzqjxN-uQ0PF-2sf25dvlChmzfz1z_udzR70M7DUnxA8MqjZCnI0svjw_rUrRXuUkWZHC-unk-PH4Kq871bJ3x22vePfv3JYarRR2hp98k5oMXH9C51I-FVM9eRCw_tpw7f3_Gh6WmfOeqhotTzCPnWPkrAbfU3QzjqPmQehZ4xQzuxLJ8N03EhatTSMA-mYs7RQ4P2-Qr2JyrQ8Y0TyLRpRYxXMCgPOs2czPPEJIyP8"/>
+</div>
+<span class="text-xl font-black text-zinc-900 dark:text-zinc-100 font-['Inter'] tracking-tight">WealthFlow</span>
+</div>
+<button class="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95 duration-200 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="mt-20 px-6 max-w-5xl mx-auto space-y-8">
+<!-- Network Summary Hero -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-primary-container p-6 rounded-lg text-on-primary-container flex flex-col justify-between shadow-lg">
+<div>
+<p class="text-sm font-medium opacity-90">Total you're owed</p>
+<h2 class="text-4xl font-black mt-1">$1,420.50</h2>
+</div>
+<div class="mt-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-xs font-bold uppercase tracking-wider">From 8 people</span>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-lg flex flex-col justify-between">
+<div>
+<p class="text-sm font-medium text-on-surface-variant">Total you owe</p>
+<h2 class="text-4xl font-black mt-1 text-tertiary">$345.20</h2>
+</div>
+<div class="mt-8">
+<button class="bg-on-surface text-on-primary w-full py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">person_add</span>
+            Add New Friend
+          </button>
+</div>
+</div>
+</section>
+<!-- Active Groups - Bento Grid Style -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-extrabold tracking-tight">Active Groups</h3>
+<button class="text-primary font-bold text-sm">View All</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Group Card 1 -->
+<div class="bg-white border border-outline-variant p-5 rounded-lg hover:shadow-md transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary-fixed-dim/20 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform"></div>
+<div class="relative">
+<div class="flex items-center justify-between mb-4">
+<div class="w-12 h-12 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">flight_takeoff</span>
+</div>
+<span class="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded-full font-black uppercase">Active</span>
+</div>
+<h4 class="font-bold text-lg">Trip to Iceland</h4>
+<p class="text-xs text-on-surface-variant mb-6">4 members • Shared expenses</p>
+<div class="flex items-center -space-x-3 mb-6">
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a smiling woman with glasses in a professional setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTPECguW4USDL8EIyWq8-XleB4b6hRbBrdib0lJWXxGcEacRPlhWgtL0jAKcCpNpGrZQwKDRJoa4AZFTU68jJu5bmKrWeI_Q_xLhuXINDaMlYqNtbV6RVjt9NmvXrt6eppsXpmHNqj7q6fR25x2Cw5BPA-GkkJC2abwShGL4T_fCIvDBsINZk9jCapYE8h6j5x-weUUwh21aRJ5tRkd2E4Pl7Zdq5TzmTCgFTUmHGKgf-ZluZqz7rlYxbwAA1Cjmfy118ngvg3-4E"/>
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="close up of a cheerful young man with a beard and curly hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbKln29F23WX9cvCW66Oy0SAf8kFSr2O1kOWwOqTveFzwx2ODZ-JQZHyg_Uas9C18dnTgc0T0UMJTBhgvt4qgTptm8RD6jmqSZCWsVaz_A_HDR5prvct4EWnCsKIbazM52m9Am3DH5Ci7XI9fwkq7ncOuNgafkkqRYXp0zH7zBqgM0N9llvpzYVeTK5bH9A2eJXF4fhGOhyNAmiCE_uX7N09wy6QsyPxRZGWUvqbRJ6N09tRvcoy3XLP-t1TjHadc4jQVbrd1CdL0"/>
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="headshot of a middle-aged man with short hair and a friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlWaWEixIM077Qpiq09_4qx0lRTQPUnuTgqL743QFnmqhLwvLatV8LBrYluQ34U3C_WalDfV6luExrjgijXHOS1SsG24WJ4wDzVQnnqSNytNXj_NeUXlWloVfI0SPS5XypboXMYsBsf5dnp4NbPgzf8r3zFFVqI20svqh9QYHCp66GqVfbPWFIPY2OxG80KJD5m2UJwdjIKd2hv1cEayCmUbi4ipr9h8tOxeoY0583VKHupkVxoQXcsg4pIHM5E2gwQpCG5afpxcY"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+1</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-dashed border-outline-variant">
+<span class="text-xs font-medium text-on-surface-variant">Your Balance</span>
+<span class="text-sm font-black text-primary">+$420.00</span>
+</div>
+</div>
+</div>
+<!-- Group Card 2 -->
+<div class="bg-white border border-outline-variant p-5 rounded-lg hover:shadow-md transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-tertiary-fixed/30 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform"></div>
+<div class="relative">
+<div class="flex items-center justify-between mb-4">
+<div class="w-12 h-12 rounded-lg bg-tertiary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">home_work</span>
+</div>
+</div>
+<h4 class="font-bold text-lg">House Rent &amp; Utils</h4>
+<p class="text-xs text-on-surface-variant mb-6">3 members • Recurring</p>
+<div class="flex items-center -space-x-3 mb-6">
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="smiling woman with long brown hair wearing a blazer in a modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArx77-STpqAv5fT-hgomEZvOu0p1zCOAV6Ilo95Oixa4AIYrhh4h3ZDVt5AkAgs4bfsaGik-6Fm0I0Ga0F8dZiIuqPg1yMAgScZ43dTLwAkMu75zTHt6kjw_9IchUzF50Z8yYdPmMLjVVwmPdbKHiPajNpI3qQDaFKmXp_ysinYjR68UtqiK2M-ysztxGteEznA8HsW2hLYmMdOt-Eyi-5nPUd2ocXZ4sPGfCDamF2WdHbtu194wClA5nkp0cc_X-02b-NWVhT1rM"/>
+<img alt="Member" class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="professional male headshot with a confident look and dark hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDS7BdYZACYwaiVJjnI1-QazVMhW_H-5fWSrV-ytzEvn0tfLm6GxH-FYS_STV6wh1NmOGCKvFZfCyGMBVewvYcjkJQc6Xk6lW5e2uIzAq7khCEa7IeKdWWqHN5MMtRh9xXzvmci2z9EqQ7V_k8eA1U2XCiWryUYWJfPtJR013uKy-CwhDCG5qYSvmdVrPpaN-7h_FkMZ-h1PEIHcAHypZHKFN-HjUFO9Z5PylZNHcM3TY1QTV09AygUkBJ70su32HVKJNSXpLD4ryo"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface-variant">ME</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-dashed border-outline-variant">
+<span class="text-xs font-medium text-on-surface-variant">Your Balance</span>
+<span class="text-sm font-black text-tertiary">-$125.50</span>
+</div>
+</div>
+</div>
+<!-- Add New Group Placeholder -->
+<button class="bg-surface-container-low border-2 border-dashed border-outline-variant p-5 rounded-lg flex flex-col items-center justify-center gap-3 hover:bg-surface-container transition-colors group">
+<div class="w-12 h-12 rounded-full bg-outline-variant/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant">add</span>
+</div>
+<span class="font-bold text-sm text-on-surface-variant">Create New Group</span>
+</button>
+</div>
+</section>
+<!-- Individual Friends - Glassmorphism Side Scroll -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-extrabold tracking-tight">Friend Balances</h3>
+<button class="text-primary font-bold text-sm">Manage</button>
+</div>
+<div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar">
+<!-- Friend 1 -->
+<div class="min-w-[160px] bg-white border border-outline-variant rounded-lg p-4 flex flex-col items-center text-center">
+<img alt="Marcus Thorne" class="w-14 h-14 rounded-full object-cover mb-3" data-alt="close up profile of a professional woman with a serious but approachable expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk1Ujl__TvnMpek1A0cM7XuhecYGGhvFS3I_gDmoQf8ALb0Tx9sPwUF1zg9UVly7mFH7s0LtEWngwxyQ5mIr_pCenXu-YKFUesOB9PNtMvcq7J-cFBTL8GH8mZ9jA2Wzvsog8ZD2pKiZhuQjhuEq6bFwq-_qlNyIHLEXqJ_INZbbCkOqNNGBExRyhcjoPyinA7fv5pD1mZqBeW1j-9L8WHL7OzjOKBNFFc0fqjHE0bjDLmvKI_P24LY4HZaMTvJv0VirT4tzqf_6E"/>
+<h5 class="font-bold text-sm">Marcus Thorne</h5>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mt-1">Owes you</p>
+<span class="text-primary font-black text-lg">$85.00</span>
+</div>
+<!-- Friend 2 -->
+<div class="min-w-[160px] bg-white border border-outline-variant rounded-lg p-4 flex flex-col items-center text-center">
+<img alt="Elena Rodriguez" class="w-14 h-14 rounded-full object-cover mb-3" data-alt="portrait of a man with short graying hair and a calm expression in natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9e6l3673-nsRa9pV8NhsoXMEMVteGAdXDMqya61FD45zRqbHF46o5F54Pf4tejrXQWyprY3yRzgfLdgT2Hn7bYKjfSqIibsB-fKEGjc3zmNgmZgwv4ZH1uK9MdB55bzZDC5sOGqyKFeo8AOIs_RFi8H7iQ5ZEnYG18mqRq606iSIyU6HLX-E0CPCcHM_EcBisTfAyB6GGmVAcHPAZJmkC03W7DWkMoK7jc9o29bBbOpm5fLSPTPI-rnh4TIE5vH-LP7V5jE7VAhQ"/>
+<h5 class="font-bold text-sm">Elena Rodriguez</h5>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mt-1 text-tertiary">You owe</p>
+<span class="text-tertiary font-black text-lg">$42.30</span>
+</div>
+<!-- Friend 3 -->
+<div class="min-w-[160px] bg-white border border-outline-variant rounded-lg p-4 flex flex-col items-center text-center">
+<img alt="James Wilson" class="w-14 h-14 rounded-full object-cover mb-3" data-alt="close up headshot of a young man with glasses and a warm smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLrR5HHkGnl1P2uZwUDIjQ9kcc7withcSlGjUE_7letXrwu4Q953tDBUPajeezge_r3Zn4p6P1N3mvlt50ZrpJaMBXSiN-rykRN69d5M2V4kxTN7jFo9XFtF0JA5nWrippncbMcJmq5hG6cmdE9L4FkWLy_ler2KhpNvcKojAHoPWM221WN9DWxTfYafdqAAvPH6gQ7io-RdEHt1a_si4ol22h1_qFQL8fhC-zSMtc6Dh_zhNZEjxay2hu8qlClWIpIkjs-QtB9Xw"/>
+<h5 class="font-bold text-sm">James Wilson</h5>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mt-1">Owes you</p>
+<span class="text-primary font-black text-lg">$112.10</span>
+</div>
+<!-- Friend 4 -->
+<div class="min-w-[160px] bg-white border border-outline-variant rounded-lg p-4 flex flex-col items-center text-center">
+<img alt="Sarah Chen" class="w-14 h-14 rounded-full object-cover mb-3" data-alt="portrait of a woman with a confident expression and stylish glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgv0x7WfkywAml4N0-m6wMBOdWYAy2cfAtQSL7NK9ulDdMyZPuZGqx-FpHpE0F4FhwofBZxmcG4SAjnbTTYniijtOr-bR86nizq-HN835yGh8jSVbGL7GOnJwsNQ8XF891BlCcytQ-1ZPJts2pkUBTi0lp1sBvPowSoACRWAyxRMVXxfDcZzguOZDfE5fnMSPMKxUAGE7qZQI3WbdWeWZMmTM8fty8fUjb-IuQ3SkcVVga7B05Ub-7qQw3svDfOXf-MnSuJsYL-kc"/>
+<h5 class="font-bold text-sm">Sarah Chen</h5>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mt-1">Settled Up</p>
+<span class="text-on-surface-variant font-black text-lg">$0.00</span>
+</div>
+</div>
+</section>
+<!-- Recent Splits - High End List -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xl font-extrabold tracking-tight">Recent Splits</h3>
+<button class="material-symbols-outlined text-on-surface-variant">filter_list</button>
+</div>
+<div class="space-y-3">
+<!-- Split Item 1 -->
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between hover:bg-surface-container transition-all group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div>
+<h6 class="font-bold text-sm">Dinner at Blue Lagoon</h6>
+<p class="text-xs text-on-surface-variant">Yesterday • Group: Trip to Iceland</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-black text-primary">+$45.50</p>
+<p class="text-[10px] text-on-surface-variant font-medium">You paid $182.00</p>
+</div>
+</div>
+<!-- Split Item 2 -->
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between hover:bg-surface-container transition-all group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed-dim/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<div>
+<h6 class="font-bold text-sm">Electric Bill - April</h6>
+<p class="text-xs text-on-surface-variant">3 days ago • Group: House Rent</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-black text-tertiary">-$62.75</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Elena paid $125.50</p>
+</div>
+</div>
+<!-- Split Item 3 -->
+<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between hover:bg-surface-container transition-all group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">shopping_bag</span>
+</div>
+<div>
+<h6 class="font-bold text-sm">Grocery Shopping</h6>
+<p class="text-xs text-on-surface-variant">May 12 • Personal Split</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-black text-primary">+$12.20</p>
+<p class="text-[10px] text-on-surface-variant font-medium">You paid $24.40</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg border-t border-zinc-100 dark:border-zinc-800 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-[32px]">
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Overview</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Activity</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-sky-400 text-white rounded-full px-4 py-2 shadow-lg shadow-sky-200 dark:shadow-sky-900/20 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Add</span>
+</a>
+<a class="flex flex-col items-center justify-center text-sky-500 dark:text-sky-400 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Splits</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WealthFlow - Dashboard Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#414753",
+                    "primary-fixed-dim": "#a2c9ff",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "#c1c6d5",
+                    "on-surface": "#191c20",
+                    "secondary-fixed-dim": "#9fcaff",
+                    "on-primary-fixed-variant": "#004881",
+                    "background": "#f9f9ff",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2e3035",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-primary": "#a2c9ff",
+                    "on-primary-container": "#fdfcff",
+                    "surface-container-highest": "#e2e2e8",
+                    "on-secondary-container": "#004578",
+                    "tertiary-fixed": "#ffdbc9",
+                    "primary": "#005ea4",
+                    "secondary-fixed": "#d2e4ff",
+                    "secondary-container": "#74b4fd",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f0f0f7",
+                    "surface-container-low": "#f3f3f9",
+                    "on-primary-fixed": "#001c38",
+                    "tertiary-container": "#bd5700",
+                    "tertiary-fixed-dim": "#ffb68c",
+                    "surface-bright": "#f9f9ff",
+                    "outline": "#717785",
+                    "on-tertiary-container": "#fffbff",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#0060a8",
+                    "on-secondary-fixed-variant": "#00497e",
+                    "on-background": "#191c20",
+                    "on-secondary-fixed": "#001d36",
+                    "primary-fixed": "#d3e4ff",
+                    "tertiary": "#964400",
+                    "primary-container": "#0077ce",
+                    "surface-dim": "#d9d9e0",
+                    "on-tertiary-fixed": "#321200",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#ededf4",
+                    "on-error": "#ffffff",
+                    "surface": "#f9f9ff",
+                    "surface-variant": "#e2e2e8",
+                    "secondary": "#0461a4",
+                    "surface-container-high": "#e7e8ee",
+                    "on-tertiary-fixed-variant": "#763400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {},
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .custom-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 py-3 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md shadow-sm border-b border-zinc-100 dark:border-zinc-800">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="professional headshot of a smiling young man in a light blue shirt with a clean studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfEMbFzS-8H1rercjd77gb0NVdjHJ4YAJxuHY3ak0IeoQ2QjRSRQkVBGb-H3jnjRzaxszzWIIU1QYxuEiOMr6obeTfuYb-9gJCIXZf_R5TdrzO9zzYQc2_irfBoArOUKWNuc30AzgAvG8TnrC4WtiWoo9ai1aUzKVMU8gLNTaZKkyezyj_aWs1REBAgtUBks-JyvkGgVwdh5UGmGUdjHGtHJhmuXM10cJgARQ_Mu0es5PEEsB2GIyjnIea6roUDMgKIiHkEtB--iU"/>
+</div>
+<h1 class="text-xl font-black text-zinc-900 dark:text-zinc-100 font-['Inter'] tracking-tight">WealthFlow</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-sky-400 dark:text-sky-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="max-w-7xl mx-auto px-6 pt-24 space-y-8">
+<!-- Hero Section: Total Balance & Stats -->
+<div class="bento-grid">
+<!-- Balance Card -->
+<div class="col-span-12 lg:col-span-8 bg-primary-container p-8 rounded-xl text-on-primary-container relative overflow-hidden shadow-2xl">
+<div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+<div class="relative z-10 flex flex-col justify-between h-full">
+<div>
+<p class="text-white/80 font-medium tracking-wide mb-2 uppercase text-sm">Total Balance</p>
+<h2 class="text-5xl font-black tracking-tighter">$42,650.00</h2>
+</div>
+<div class="mt-8 flex gap-4">
+<div class="flex-1 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/10">
+<div class="flex items-center gap-2 text-white/70 mb-1">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_downward">arrow_downward</span>
+<span class="text-xs font-bold uppercase tracking-widest">Income</span>
+</div>
+<p class="text-xl font-bold">+$5,240</p>
+</div>
+<div class="flex-1 bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/10">
+<div class="flex items-center gap-2 text-white/70 mb-1">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_upward">arrow_upward</span>
+<span class="text-xs font-bold uppercase tracking-widest">Spending</span>
+</div>
+<p class="text-xl font-bold">-$2,810</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Weekly Spending Bar Chart (Asymmetric Bento) -->
+<div class="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl border border-surface-container-high shadow-sm flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-bold text-lg text-on-surface">Weekly Flow</h3>
+<span class="text-xs font-bold px-2 py-1 bg-secondary-fixed text-on-secondary-fixed rounded-full uppercase tracking-tighter">Last 7 Days</span>
+</div>
+<div class="flex-grow flex items-end justify-between gap-2 h-40">
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 45%;"></div>
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 60%;"></div>
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 35%;"></div>
+<div class="w-full bg-primary-container rounded-t-full shadow-lg shadow-primary-container/20" style="height: 90%;"></div>
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 55%;"></div>
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 75%;"></div>
+<div class="w-full bg-surface-container rounded-t-full transition-all hover:bg-secondary-container" style="height: 40%;"></div>
+</div>
+<div class="flex justify-between mt-3 text-[10px] font-bold text-outline uppercase">
+<span>M</span><span>T</span><span>W</span><span class="text-primary font-black">T</span><span>F</span><span>S</span><span>S</span>
+</div>
+</div>
+</div>
+<!-- Secondary Row -->
+<div class="bento-grid">
+<!-- Category Pie Chart Simulation -->
+<div class="col-span-12 md:col-span-5 bg-white p-6 rounded-xl border border-surface-container-high shadow-sm">
+<h3 class="font-bold text-lg text-on-surface mb-6">Spending by Category</h3>
+<div class="flex items-center justify-center py-4">
+<div class="relative w-48 h-48 rounded-full border-[16px] border-tertiary-container flex items-center justify-center" style="border-image: conic-gradient(#0077ce 0% 45%, #bd5700 45% 75%, #74b4fd 75% 100%) 1; border-radius: 50%;">
+<div class="text-center">
+<p class="text-xs font-bold text-outline uppercase">Most spent</p>
+<p class="text-2xl font-black text-on-surface">Dining</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<span class="text-xs font-semibold text-on-surface-variant uppercase">Living (45%)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary-container"></span>
+<span class="text-xs font-semibold text-on-surface-variant uppercase">Dining (30%)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<span class="text-xs font-semibold text-on-surface-variant uppercase">Other (25%)</span>
+</div>
+</div>
+</div>
+<!-- Recent Transactions List -->
+<div class="col-span-12 md:col-span-7 bg-white p-6 rounded-xl border border-surface-container-high shadow-sm">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-bold text-lg text-on-surface">Recent Transactions</h3>
+<button class="text-xs font-black text-primary-container hover:underline uppercase tracking-widest">View All</button>
+</div>
+<div class="space-y-4">
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 text-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">The Golden Grille</p>
+<p class="text-xs text-outline font-medium">May 24, 2024 • 8:30 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-black text-on-surface">-$124.50</p>
+<p class="text-[10px] font-bold text-tertiary-container bg-tertiary-container/10 px-2 py-0.5 rounded-full inline-block uppercase tracking-tight">Dining</p>
+</div>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Monthly Rent</p>
+<p class="text-xs text-outline font-medium">May 22, 2024 • 9:00 AM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-black text-on-surface">-$2,100.00</p>
+<p class="text-[10px] font-bold text-primary-container bg-primary-container/10 px-2 py-0.5 rounded-full inline-block uppercase tracking-tight">Housing</p>
+</div>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-on-secondary-container/10 text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Salary Deposit</p>
+<p class="text-xs text-outline font-medium">May 20, 2024 • 12:00 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-black text-secondary">+$4,800.00</p>
+<p class="text-[10px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full inline-block uppercase tracking-tight">Income</p>
+</div>
+</div>
+<!-- Transaction Item -->
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container/20 text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Supermart Co.</p>
+<p class="text-xs text-outline font-medium">May 19, 2024 • 4:15 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-black text-on-surface">-$86.20</p>
+<p class="text-[10px] font-bold text-secondary-container bg-secondary-container/20 px-2 py-0.5 rounded-full inline-block uppercase tracking-tight">Grocery</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg shadow-[0_-4px_20px_rgba(0,0,0,0.05)] border-t border-zinc-100 dark:border-zinc-800 rounded-t-[32px]">
+<a class="flex flex-col items-center justify-center bg-sky-400 text-white rounded-full px-4 py-2 shadow-lg shadow-sky-200 dark:shadow-sky-900/20 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-0.5">Overview</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-0.5">Activity</span>
+</a>
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150 -mt-6">
+<div class="w-14 h-14 bg-primary-container rounded-full flex items-center justify-center text-white shadow-xl">
+<span class="material-symbols-outlined text-3xl" data-icon="add_circle">add_circle</span>
+</div>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-1">Add</span>
+</button>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-0.5">Splits</span>
+</a>
+<a class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:opacity-80 transition-all active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[11px] font-bold uppercase tracking-wider mt-0.5">Settings</span>
+</a>
+</nav>
+</body></html>
