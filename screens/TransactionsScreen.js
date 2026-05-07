@@ -74,7 +74,7 @@ export default function TransactionsScreen({ navigation }) {
     return true;
   });
 
-  const renderTransaction = ({ item }) => {
+  const renderTransaction = ({ item, index }) => {
     const isIncome = item.type === 'income';
     const catData = getCategories(theme).find(c => c.id === item.category);
     const iconName = isIncome ? 'wallet' : (catData ? catData.icon : 'pricetag');
@@ -87,7 +87,7 @@ export default function TransactionsScreen({ navigation }) {
     }
 
     return (
-      <Animated.View entering={FadeInDown.delay(100).duration(400).springify()}>
+      <Animated.View entering={FadeInDown.delay(Math.min(index * 35, 300)).duration(350)}>
         <View style={styles.txnItem}>
           <View style={styles.txnLeft}>
             <View style={[styles.txnIconBox, { backgroundColor: iconColor + '15' }]}>
@@ -124,14 +124,6 @@ export default function TransactionsScreen({ navigation }) {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -146,7 +138,11 @@ export default function TransactionsScreen({ navigation }) {
       </View>
 
       <View style={styles.content}>
-        {filteredTransactions.length === 0 ? (
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          </View>
+        ) : filteredTransactions.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconBox}>
               <Ionicons name="receipt-outline" size={48} color={theme.colors.primary} />

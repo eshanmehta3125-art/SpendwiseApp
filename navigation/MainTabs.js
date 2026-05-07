@@ -1,13 +1,12 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Platform, StyleSheet, Pressable, Text } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
-import Animated, { useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
-import HomeScreen from '../screens/HomeScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
+import HomeScreen from '../screens/HomeScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SplitManagerScreen from '../screens/SplitManagerScreen';
@@ -53,10 +52,10 @@ const TabBarItem = ({ route, label, isFocused, onPress, onLongPress, theme }) =>
       >
         <Animated.View style={[
           {
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            height: 48, 
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 48,
             borderRadius: 24,
             paddingHorizontal: 12,
             backgroundColor: isFocused ? theme.colors.primaryContainer : 'transparent',
@@ -64,16 +63,16 @@ const TabBarItem = ({ route, label, isFocused, onPress, onLongPress, theme }) =>
         ]}>
           <Ionicons name={iconName} size={24} color={iconColor} />
           <Animated.View style={[{ overflow: 'hidden' }, textAnimatedStyle]}>
-            <Text style={{ 
-              color: iconColor, 
-              fontSize: 11, 
+            <Text style={{
+              color: iconColor,
+              fontSize: 11,
               fontFamily: theme.fonts?.bodyBlack || 'System',
               textTransform: 'uppercase',
               letterSpacing: 0.5,
               marginLeft: 6,
               width: 65,
             }}
-            numberOfLines={1}
+              numberOfLines={1}
             >
               {label}
             </Text>
@@ -95,8 +94,8 @@ function CustomTabBar({ state, descriptors, navigation, theme, isDarkMode, style
             options.tabBarLabel !== undefined
               ? options.tabBarLabel
               : options.title !== undefined
-              ? options.title
-              : route.name;
+                ? options.title
+                : route.name;
 
           const isFocused = state.index === index;
 
@@ -120,7 +119,7 @@ function CustomTabBar({ state, descriptors, navigation, theme, isDarkMode, style
           };
 
           return (
-            <TabBarItem 
+            <TabBarItem
               key={index}
               route={route}
               label={label}
@@ -157,7 +156,7 @@ export default function MainTabs() {
 const getStyles = (theme) => StyleSheet.create({
   tabBarWrapper: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: Platform.OS === 'ios' ? 32 : 24,
     left: 10,
     right: 10,
     elevation: 0,

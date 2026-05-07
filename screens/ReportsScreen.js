@@ -38,7 +38,7 @@ export default function ReportsScreen({ navigation }) {
   
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('Year');
+  const [filter, setFilter] = useState('Yearly');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All History');
 
@@ -135,7 +135,54 @@ export default function ReportsScreen({ navigation }) {
     ? `Your expenses in ${topCat} ${isIncrease ? 'increased' : 'decreased'} by ${Math.abs(catChange)}% compared to last month.`
     : "Your spending habits are stable compared to last month.";
 
+  // Helper to determine if transaction date is in previous period
+  const getIsPreviousPeriod = (tDate, currentFilter) => {
+    const now = new Date();
+    if (currentFilter === 'Daily') {
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+      return tDate.toDateString() === yesterday.toDateString();
+    } else if (currentFilter === 'Weekly') {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(now.getDate() - 7);
+      const fourteenDaysAgo = new Date();
+      fourteenDaysAgo.setDate(now.getDate() - 14);
+      return tDate >= fourteenDaysAgo && tDate < sevenDaysAgo;
+    } else if (currentFilter === 'Monthly') {
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return tDate.getMonth() === prevMonth.getMonth() && tDate.getFullYear() === prevMonth.getFullYear();
+    } else if (currentFilter === 'Yearly') {
+      return tDate.getFullYear() === now.getFullYear() - 1;
+    }
+    return false;
+  };
+
+  // Filter previous period expenses
+  const prevPeriodExpenses = expenses.filter(t => {
+    const matchesSearch = t.desc?.toLowerCase().includes(searchQuery.toLowerCase()) || t.category?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCategory === 'All History' || t.category === (selectedCategory === 'Food' ? 'Dining' : selectedCategory);
+    const tDate = t.timestamp?.toDate ? t.timestamp.toDate() : new Date(t.timestamp || t.date);
+    return matchesSearch && matchesCat && getIsPreviousPeriod(tDate, filter);
+  });
+
   const totalExpense = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+  const prevTotalExpense = prevPeriodExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Calculate percentage change
+  let percentChange = 0;
+  if (prevTotalExpense > 0) {
+    percentChange = Math.round(((totalExpense - prevTotalExpense) / prevTotalExpense) * 100);
+  } else if (totalExpense > 0) {
+    percentChange = 100;
+  }
+
+  const isTrendIncrease = percentChange > 0;
+  const isTrendZero = percentChange === 0;
+
+  const trendArrow = isTrendZero ? 'remove' : (isTrendIncrease ? 'arrow-up' : 'arrow-down');
+  const trendColor = isTrendZero ? theme.colors.outline : (isTrendIncrease ? '#ef4444' : '#10b981'); 
+  const trendBgColor = isTrendZero ? theme.colors.surfaceContainerHigh : (isTrendIncrease ? '#ef444415' : '#10b98115');
+
   const dailyAverage = filteredExpenses.length > 0 ? totalExpense / 30 : 0; 
 
   // Pie Data
@@ -242,9 +289,9 @@ export default function ReportsScreen({ navigation }) {
                 <Text style={styles.periodLabel}>TOTAL EXPENSE</Text>
                 <Text style={styles.periodValue}>{currencySymbol}{isPrivacyMode ? '****.**' : totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
              </View>
-             <View style={styles.trendBadge}>
-                <Ionicons name="trending-down" size={14} color="#0284c7" />
-                <Text style={styles.trendText}> 12%</Text>
+             <View style={[styles.trendBadge, { backgroundColor: trendBgColor, borderColor: trendColor + '20', borderWidth: 1 }]}>
+                <Ionicons name={trendArrow} size={14} color={trendColor} />
+                <Text style={[styles.trendText, { color: trendColor }]}> {Math.abs(percentChange)}%</Text>
              </View>
           </View>
         </Animated.View>

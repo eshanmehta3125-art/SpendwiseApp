@@ -91,7 +91,7 @@ export default function App() {
             {user ? (
             <>
               <Stack.Screen name="Home" component={MainTabs} />
-              <Stack.Screen name="Transactions" component={TransactionsScreen} options={{ presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="Transactions" component={TransactionsScreen} options={{ animation: 'fade_from_bottom' }} />
               <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
               <Stack.Screen name="Notifications" component={NotificationsScreen} />
               <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
