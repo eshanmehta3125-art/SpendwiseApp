@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Dimensions, Image, Platform, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, Dimensions, Image, Platform, Alert, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { auth, db } from '../firebaseConfig';
-import { collection, query, onSnapshot, addDoc, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import * as Contacts from 'expo-contacts';
 
 const { width } = Dimensions.get('window');
 
 export default function SplitManagerScreen({ navigation }) {
-  const { theme, currencySymbol } = useTheme();
-  const styles = getStyles(theme);
+  const { theme, currencySymbol, isDarkMode } = useTheme();
+  const styles = getStyles(theme, isDarkMode);
 
   const [groups, setGroups] = useState([]);
   const [friends, setFriends] = useState([]);
@@ -31,12 +31,30 @@ export default function SplitManagerScreen({ navigation }) {
     };
   }, []);
 
-  const totalOwedToYou = friends.filter(f => f.amount > 0).reduce((acc, f) => acc + f.amount, 0);
-  const totalYouOwe = friends.filter(f => f.amount < 0).reduce((acc, f) => acc + Math.abs(f.amount), 0);
-  const peopleOwingYou = friends.filter(f => f.amount > 0).length;
+  // Compute effective friend balances including group balances
+  const computedFriends = friends.map(friend => {
+    let effectiveAmount = friend.amount || 0;
+    groups.forEach(g => {
+      if (g.memberIds && g.memberIds.includes(friend.id)) {
+        effectiveAmount += (g.balance || 0) / Math.max(1, g.memberIds.length);
+      }
+    });
+    return { ...friend, effectiveAmount };
+  });
+
+  const totalOwedToYou = groups.filter(g => (g.balance || 0) > 0).reduce((acc, g) => acc + g.balance, 0) + computedFriends.filter(f => f.effectiveAmount > 0).reduce((acc, f) => acc + f.effectiveAmount, 0);
+  const totalYouOwe = groups.filter(g => (g.balance || 0) < 0).reduce((acc, g) => acc + Math.abs(g.balance), 0) + computedFriends.filter(f => f.effectiveAmount < 0).reduce((acc, f) => acc + Math.abs(f.effectiveAmount), 0);
+  const peopleOwingYou = computedFriends.filter(f => f.effectiveAmount > 0).length + groups.filter(g => (g.balance || 0) > 0).length;
 
   const [isFriendModalVisible, setFriendModalVisible] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
+
+  const [isContactPickerVisible, setContactPickerVisible] = useState(false);
+  const [deviceContacts, setDeviceContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
 
   const handleAddFriend = async () => {
     if (Platform.OS === 'web') {
@@ -59,25 +77,21 @@ export default function SplitManagerScreen({ navigation }) {
           onPress: async () => {
             const { status } = await Contacts.requestPermissionsAsync();
             if (status === 'granted') {
-              const { data } = await Contacts.getContactsAsync({
-                fields: [Contacts.Fields.PhoneNumbers],
-              });
-              // Filter out weird system numbers like *7 or *86
-              const validContacts = data.filter(c => c.name && c.name.length > 1 && !c.name.startsWith('*'));
-              
-              if (validContacts.length > 0) {
-                const contact = validContacts[0];
-                addDoc(collection(db, 'users', auth.currentUser.uid, 'friends'), {
-                  name: contact.name, 
-                  phone: contact.phoneNumbers?.[0]?.number || '',
-                  amount: 0, 
-                  status: 'Settled Up', 
-                  img: `https://i.pravatar.cc/150?u=${contact.name.replace(/ /g, '')}`
+              setLoadingContacts(true);
+              setContactPickerVisible(true);
+              setContactSearchQuery('');
+              // Fetch contacts asynchronously
+              setTimeout(async () => {
+                const { data } = await Contacts.getContactsAsync({
+                  fields: [Contacts.Fields.PhoneNumbers],
                 });
-                Alert.alert("Success", `Added ${contact.name} from contacts!`);
-              } else {
-                Alert.alert("Info", "No valid contacts found.");
-              }
+                const validContacts = data.filter(c => c.name && c.name.length > 1 && !c.name.startsWith('*'));
+                validContacts.sort((a,b) => a.name.localeCompare(b.name));
+                setDeviceContacts(validContacts);
+                setFilteredContacts(validContacts);
+                setSelectedContacts([]);
+                setLoadingContacts(false);
+              }, 100);
             } else {
               Alert.alert("Permission required", "Allow contacts access in settings.");
             }
@@ -103,31 +117,61 @@ export default function SplitManagerScreen({ navigation }) {
     setFriendModalVisible(false);
   };
 
+  const confirmAddContacts = async () => {
+    for (const contactId of selectedContacts) {
+      const contact = deviceContacts.find(c => c.id === contactId);
+      if (contact) {
+        await addDoc(collection(db, 'users', auth.currentUser.uid, 'friends'), {
+          name: contact.name, 
+          phone: contact.phoneNumbers?.[0]?.number || '',
+          amount: 0, 
+          status: 'Settled Up', 
+          img: `https://i.pravatar.cc/150?u=${contact.name.replace(/ /g, '')}`
+        });
+      }
+    }
+    setContactPickerVisible(false);
+    Alert.alert("Success", `Added ${selectedContacts.length} friends!`);
+  };
+
   const [isGroupModalVisible, setGroupModalVisible] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedGroupMembers, setSelectedGroupMembers] = useState([]);
   const [isManageFriendsModalVisible, setManageFriendsModalVisible] = useState(false);
+
+  // Friend Detail Modal State
+  const [isFriendDetailVisible, setFriendDetailVisible] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  
+  // Summary Modal State
+  const [isSummaryModalVisible, setSummaryModalVisible] = useState(false);
+  const [summaryType, setSummaryType] = useState('owedToYou'); // 'owedToYou' or 'youOwe'
+  
+  // Add Expense to Friend State
+  const [isAddExpenseVisible, setAddExpenseVisible] = useState(false);
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseDesc, setExpenseDesc] = useState('');
+  
+  // Friend History State
+  const [friendExpenses, setFriendExpenses] = useState([]);
+  const [isFriendHistoryVisible, setFriendHistoryVisible] = useState(false);
+  const [friendExpensesUnsubscribe, setFriendExpensesUnsubscribe] = useState(null);
+
+  // View All Groups State
+  const [isAllGroupsVisible, setAllGroupsVisible] = useState(false);
 
   const handleCreateGroup = () => {
     if (Platform.OS === 'web') {
       const name = window.prompt("Enter group name:");
       if (name) {
         addDoc(collection(db, 'users', auth.currentUser.uid, 'groups'), {
-          name, type: 'Active', members: 1, icon: 'people', color: 'primary', balance: 0
+          name, type: 'Active', members: 1, icon: 'people', color: 'primary', balance: 0, memberIds: []
         });
       }
     } else {
       setNewGroupName('');
       setSelectedGroupMembers([]);
       setGroupModalVisible(true);
-    }
-  };
-
-  const toggleMemberSelection = (friendId) => {
-    if (selectedGroupMembers.includes(friendId)) {
-      setSelectedGroupMembers(selectedGroupMembers.filter(id => id !== friendId));
-    } else {
-      setSelectedGroupMembers([...selectedGroupMembers, friendId]);
     }
   };
 
@@ -146,9 +190,58 @@ export default function SplitManagerScreen({ navigation }) {
     setGroupModalVisible(false);
   };
 
+  const openFriendDetail = (friend) => {
+    setSelectedFriend(friend);
+    setFriendDetailVisible(true);
+    setFriendHistoryVisible(false);
+    setAddExpenseVisible(false);
+    
+    // Subscribe to expenses history
+    const expensesRef = collection(db, 'users', auth.currentUser.uid, 'friends', friend.id, 'expenses');
+    const unsub = onSnapshot(query(expensesRef), (snapshot) => {
+      setFriendExpenses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.createdAt - a.createdAt));
+    });
+    setFriendExpensesUnsubscribe(() => unsub);
+  };
+
+  const closeFriendDetail = () => {
+    if (friendExpensesUnsubscribe) friendExpensesUnsubscribe();
+    setFriendDetailVisible(false);
+    setSelectedFriend(null);
+  };
+
+  const handleAddFriendExpense = async () => {
+    const amt = parseFloat(expenseAmount);
+    if (!amt || isNaN(amt) || !selectedFriend) return;
+
+    try {
+      // Split 50/50 - you paid, so they owe you half
+      const splitAmount = amt / 2;
+      const friendRef = doc(db, 'users', auth.currentUser.uid, 'friends', selectedFriend.id);
+      
+      const friendExpensesRef = collection(db, 'users', auth.currentUser.uid, 'friends', selectedFriend.id, 'expenses');
+      await addDoc(friendExpensesRef, {
+         title: expenseDesc || 'Expense',
+         amount: amt,
+         splitAmount: splitAmount,
+         paidBy: 'You',
+         createdAt: Date.now()
+      });
+
+      await updateDoc(friendRef, {
+        amount: increment(splitAmount)
+      });
+      setAddExpenseVisible(false);
+      setExpenseAmount('');
+      setExpenseDesc('');
+      Alert.alert("Success", `Added ${expenseDesc} and split with ${selectedFriend.name}.`);
+    } catch (err) {
+      Alert.alert("Error", err.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
            <Text style={styles.headerTitle}>SpendWise</Text>
@@ -162,38 +255,48 @@ export default function SplitManagerScreen({ navigation }) {
         
         {/* Network Summary Hero */}
         <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.heroRow}>
-          <View style={[styles.heroCard, { backgroundColor: theme.colors.primaryContainer }]}>
+          <TouchableOpacity 
+            style={[styles.heroCard, { backgroundColor: theme.colors.primaryContainer }]}
+            activeOpacity={0.8}
+            onPress={() => { setSummaryType('owedToYou'); setSummaryModalVisible(true); }}
+          >
             <Text style={[styles.heroLabel, { color: 'rgba(255,255,255,0.8)' }]}>Total you're owed</Text>
             <Text style={[styles.heroAmount, { color: theme.colors.onPrimaryContainer }]}>{currencySymbol}{totalOwedToYou.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
             <View style={styles.heroTrend}>
               <Ionicons name="trending-up" size={14} color={theme.colors.onPrimaryContainer} />
-              <Text style={[styles.heroTrendText, { color: theme.colors.onPrimaryContainer }]}>FROM {peopleOwingYou} PEOPLE</Text>
+              <Text style={[styles.heroTrendText, { color: theme.colors.onPrimaryContainer }]}>FROM {peopleOwingYou} ENTITIES</Text>
             </View>
-          </View>
-          <View style={[styles.heroCard, { backgroundColor: theme.colors.surfaceContainerHigh }]}>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.heroCard, { backgroundColor: theme.colors.surfaceContainerHigh }]}
+            activeOpacity={0.8}
+            onPress={() => { setSummaryType('youOwe'); setSummaryModalVisible(true); }}
+          >
             <Text style={[styles.heroLabel, { color: theme.colors.onSurfaceVariant }]}>Total you owe</Text>
             <Text style={[styles.heroAmount, { color: theme.colors.tertiary }]}>{currencySymbol}{totalYouOwe.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
             <TouchableOpacity style={styles.addFriendBtn} onPress={handleAddFriend}>
                <Ionicons name="person-add" size={16} color={theme.colors.onPrimary} />
                <Text style={styles.addFriendBtnText}>Add Friend</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Active Groups */}
         <Animated.View entering={FadeInDown.delay(100).duration(600).springify()}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Active Groups</Text>
-            <Text style={styles.viewAllLink}>VIEW ALL</Text>
+            <TouchableOpacity onPress={() => setAllGroupsVisible(true)}>
+              <Text style={styles.viewAllLink}>VIEW ALL</Text>
+            </TouchableOpacity>
           </View>
 
           {groups.length === 0 && (
              <Text style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant, marginBottom: 16 }}>You have no active groups.</Text>
           )}
 
-          {groups.map((group) => {
+          {groups.slice(0, 3).map((group) => {
              const colorHex = group.color === 'primary' ? theme.colors.primaryContainer : theme.colors.tertiaryContainer;
-             const isPositive = group.balance >= 0;
+             const isPositive = (group.balance || 0) >= 0;
              return (
                <TouchableOpacity 
                   key={group.id} 
@@ -240,24 +343,30 @@ export default function SplitManagerScreen({ navigation }) {
             </TouchableOpacity>
           </View>
           
-          {friends.length === 0 ? (
+          {computedFriends.length === 0 ? (
              <Text style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant }}>You haven't added any friends yet.</Text>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
-              {friends.map(friend => {
-                 const isOwed = friend.amount > 0;
-                 const isSettled = friend.amount === 0;
+              {computedFriends.map(friend => {
+                 const isOwed = friend.effectiveAmount > 0.01;
+                 const isOweThem = friend.effectiveAmount < -0.01;
+                 const isSettled = !isOwed && !isOweThem;
+                 
+                 let amountColor = theme.colors.onSurfaceVariant;
+                 if (isOwed) amountColor = '#10b981'; // Green
+                 else if (isOweThem) amountColor = isDarkMode ? theme.colors.onSurface : '#000000'; // Black/White
+
                  return (
-                   <View key={friend.id} style={styles.friendCard}>
+                   <TouchableOpacity key={friend.id} style={styles.friendCard} onPress={() => openFriendDetail(friend)}>
                      <Image source={{ uri: friend.img }} style={styles.friendImg} />
                      <Text style={styles.friendName}>{friend.name}</Text>
-                     <Text style={[styles.friendStatus, { color: isSettled ? theme.colors.onSurfaceVariant : (isOwed ? theme.colors.primaryContainer : theme.colors.tertiary) }]}>
+                     <Text style={[styles.friendStatus, { color: amountColor }]}>
                         {isSettled ? 'Settled Up' : (isOwed ? 'Owes you' : 'You owe')}
                      </Text>
-                     <Text style={[styles.friendAmount, { color: isSettled ? theme.colors.onSurfaceVariant : (isOwed ? theme.colors.primaryContainer : theme.colors.tertiary) }]}>
-                        {currencySymbol}{Math.abs(friend.amount || 0).toFixed(2)}
+                     <Text style={[styles.friendAmount, { color: amountColor }]}>
+                        {currencySymbol}{Math.abs(friend.effectiveAmount || 0).toFixed(2)}
                      </Text>
-                   </View>
+                   </TouchableOpacity>
                  )
               })}
             </ScrollView>
@@ -266,7 +375,243 @@ export default function SplitManagerScreen({ navigation }) {
 
       </ScrollView>
 
-      {/* Custom Modal for Android/iOS Group Creation */}
+      {/* Friend Detail Modal */}
+      <Modal visible={isFriendDetailVisible} transparent animationType="slide" onRequestClose={closeFriendDetail}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { marginTop: 100, height: '80%' }]}>
+            {selectedFriend && (
+              <>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={styles.modalTitle}>{selectedFriend.name}</Text>
+                  <TouchableOpacity onPress={closeFriendDetail}>
+                    <Ionicons name="close" size={28} color={theme.colors.onSurface} />
+                  </TouchableOpacity>
+                </View>
+                
+                {!isFriendHistoryVisible && (
+                  <View style={{alignItems: 'center', marginVertical: 24}}>
+                    <Image source={{ uri: selectedFriend.img }} style={{width: 80, height: 80, borderRadius: 40, marginBottom: 16}} />
+                    <Text style={{fontSize: 16, color: theme.colors.outline, marginBottom: 8}}>Net Balance</Text>
+                    <Text style={{fontSize: 36, fontFamily: theme.fonts.headlineBold, color: selectedFriend.effectiveAmount >= 0 ? '#10b981' : (isDarkMode ? theme.colors.onSurface : '#000')}}>
+                      {selectedFriend.effectiveAmount >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(selectedFriend.effectiveAmount).toFixed(2)}
+                    </Text>
+                  </View>
+                )}
+
+                {isAddExpenseVisible ? (
+                  <View style={{backgroundColor: theme.colors.surfaceContainerHigh, padding: 16, borderRadius: 16}}>
+                    <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 16}}>Add Split Expense</Text>
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="Amount you paid"
+                      placeholderTextColor={theme.colors.outline}
+                      keyboardType="decimal-pad"
+                      value={expenseAmount}
+                      onChangeText={setExpenseAmount}
+                    />
+                    <TextInput
+                      style={styles.modalInput}
+                      placeholder="What was it for?"
+                      placeholderTextColor={theme.colors.outline}
+                      value={expenseDesc}
+                      onChangeText={setExpenseDesc}
+                    />
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity onPress={() => setAddExpenseVisible(false)} style={styles.modalCancelBtn}>
+                        <Text style={styles.modalCancelText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleAddFriendExpense} style={styles.modalCreateBtn}>
+                        <Text style={styles.modalCreateText}>Split 50/50</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : isFriendHistoryVisible ? (
+                  <View style={{flex: 1, marginTop: 12}}>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+                      <TouchableOpacity onPress={() => setFriendHistoryVisible(false)} style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <Ionicons name="arrow-back" size={20} color={theme.colors.onSurface} style={{marginRight: 8}} />
+                        <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface}}>Back</Text>
+                      </TouchableOpacity>
+                      <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.outline}}>History</Text>
+                    </View>
+                    
+                    {friendExpenses.length === 0 ? (
+                      <Text style={{textAlign: 'center', color: theme.colors.outline, marginTop: 40}}>No expenses recorded yet.</Text>
+                    ) : (
+                      <FlatList
+                        data={friendExpenses}
+                        keyExtractor={item => item.id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({item}) => (
+                          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant}}>
+                            <View>
+                              <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 4}}>{item.title}</Text>
+                              <Text style={{fontSize: 12, fontFamily: theme.fonts.bodyMedium, color: theme.colors.outline}}>
+                                {new Date(item.createdAt).toLocaleDateString()} • {item.paidBy === 'You' ? 'You paid' : `${selectedFriend.name} paid`}
+                              </Text>
+                            </View>
+                            <View style={{alignItems: 'flex-end'}}>
+                              <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface}}>{currencySymbol}{item.amount.toFixed(2)}</Text>
+                              <Text style={{fontSize: 12, fontFamily: theme.fonts.bodyBold, color: item.paidBy === 'You' ? '#10b981' : theme.colors.tertiary}}>
+                                {item.paidBy === 'You' ? 'Lent' : 'Borrowed'} {currencySymbol}{item.splitAmount.toFixed(2)}
+                              </Text>
+                            </View>
+                          </View>
+                        )}
+                      />
+                    )}
+                  </View>
+                ) : (
+                  <View>
+                    <TouchableOpacity 
+                      style={[styles.createGroupBtn, {backgroundColor: theme.colors.primaryContainer, borderWidth: 0, marginBottom: 12, padding: 16}]}
+                      onPress={() => setAddExpenseVisible(true)}
+                    >
+                      <Text style={{color: theme.colors.onPrimaryContainer, fontFamily: theme.fonts.headlineBold, fontSize: 16}}>Add Expense with {selectedFriend.name}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.createGroupBtn, {backgroundColor: theme.colors.surfaceContainerHighest, borderWidth: 0, padding: 16}]}
+                      onPress={() => setFriendHistoryVisible(true)}
+                    >
+                      <Text style={{color: theme.colors.onSurface, fontFamily: theme.fonts.headlineBold, fontSize: 16}}>View History</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Contact Picker Modal */}
+      <Modal visible={isContactPickerVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: '90%', marginTop: 60 }]}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+              <Text style={styles.modalTitle}>Select Contacts</Text>
+              <TouchableOpacity onPress={() => setContactPickerVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Search contacts..."
+              placeholderTextColor={theme.colors.outline}
+              value={contactSearchQuery}
+              onChangeText={(text) => {
+                setContactSearchQuery(text);
+                if (text.trim() === '') {
+                  setFilteredContacts(deviceContacts);
+                } else {
+                  setFilteredContacts(deviceContacts.filter(c => c.name.toLowerCase().includes(text.toLowerCase())));
+                }
+              }}
+            />
+            
+            {loadingContacts ? (
+              <ActivityIndicator size="large" color={theme.colors.primary} style={{marginTop: 50}} />
+            ) : (
+              <>
+                <FlatList
+                  data={filteredContacts}
+                  keyExtractor={item => item.id}
+                  initialNumToRender={20}
+                  maxToRenderPerBatch={20}
+                  windowSize={5}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item: contact }) => {
+                    const isSelected = selectedContacts.includes(contact.id);
+                    return (
+                      <TouchableOpacity 
+                        style={[styles.memberSelectRow, isSelected && { backgroundColor: theme.colors.surfaceContainerHighest }]}
+                        onPress={() => {
+                          if (isSelected) {
+                            setSelectedContacts(selectedContacts.filter(id => id !== contact.id));
+                          } else {
+                            setSelectedContacts([...selectedContacts, contact.id]);
+                          }
+                        }}
+                      >
+                        <View style={[styles.memberSelectImg, { backgroundColor: theme.colors.primaryContainer, justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text style={{color: theme.colors.onPrimaryContainer, fontFamily: theme.fonts.headlineBold}}>{contact.name.charAt(0)}</Text>
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text style={styles.memberSelectName}>{contact.name}</Text>
+                          <Text style={{fontSize: 12, color: theme.colors.outline}}>{contact.phoneNumbers?.[0]?.number}</Text>
+                        </View>
+                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />}
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+                <TouchableOpacity 
+                  style={[styles.modalCreateBtn, { marginTop: 16, paddingVertical: 16, alignItems: 'center', opacity: selectedContacts.length > 0 ? 1 : 0.5 }]} 
+                  disabled={selectedContacts.length === 0}
+                  onPress={confirmAddContacts}
+                >
+                  <Text style={styles.modalCreateText}>Add {selectedContacts.length} Contacts</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* All Groups Modal */}
+      <Modal visible={isAllGroupsVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+           <View style={[styles.modalContent, { height: '90%', marginTop: 60 }]}>
+             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+               <Text style={styles.modalTitle}>All Groups</Text>
+               <TouchableOpacity onPress={() => setAllGroupsVisible(false)}>
+                 <Ionicons name="close" size={24} color={theme.colors.onSurface} />
+               </TouchableOpacity>
+             </View>
+             
+             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+               {groups.length === 0 ? (
+                 <Text style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant, marginTop: 40 }}>You have no active groups.</Text>
+               ) : (
+                 groups.map((group) => {
+                   const colorHex = group.color === 'primary' ? theme.colors.primaryContainer : theme.colors.tertiaryContainer;
+                   const isPositive = (group.balance || 0) >= 0;
+                   return (
+                     <TouchableOpacity 
+                        key={group.id} 
+                        style={[styles.groupCard, { marginBottom: 16 }]}
+                        onPress={() => { setAllGroupsVisible(false); navigation.navigate('GroupDetail', { groupId: group.id, groupName: group.name }); }}
+                        activeOpacity={0.8}
+                     >
+                        <View style={[styles.groupBlob, { backgroundColor: colorHex + '33' }]} />
+                        <View style={styles.groupTopRow}>
+                           <View style={[styles.groupIconBox, { backgroundColor: colorHex }]}>
+                             <Ionicons name={group.icon || 'people'} size={24} color="#fff" />
+                           </View>
+                           <View style={styles.groupBadge}>
+                             <Text style={styles.groupBadgeText}>{group.type || 'Active'}</Text>
+                           </View>
+                        </View>
+                        <Text style={styles.groupName}>{group.name}</Text>
+                        <Text style={styles.groupSub}>{group.members || 1} members • Shared</Text>
+                        
+                        <View style={styles.groupBottomRow}>
+                          <Text style={styles.groupBottomLabel}>Your Balance</Text>
+                          <Text style={[styles.groupBottomAmount, { color: isPositive ? theme.colors.primaryContainer : theme.colors.tertiary }]}>
+                            {isPositive ? '+' : '-'}{currencySymbol}{Math.abs(group.balance || 0).toFixed(2)}
+                          </Text>
+                        </View>
+                     </TouchableOpacity>
+                   );
+                 })
+               )}
+             </ScrollView>
+           </View>
+        </View>
+      </Modal>
+
+      {/* Group Creation Modal */}
       <Modal visible={isGroupModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -281,6 +626,30 @@ export default function SplitManagerScreen({ navigation }) {
               autoFocus
             />
 
+            <Text style={[styles.modalSub, { marginTop: 8 }]}>Select members:</Text>
+            <ScrollView style={{maxHeight: 150, marginBottom: 16}}>
+              {friends.map(friend => {
+                const isSelected = selectedGroupMembers.includes(friend.id);
+                return (
+                  <TouchableOpacity 
+                    key={friend.id} 
+                    style={[styles.memberSelectRow, isSelected && { backgroundColor: theme.colors.surfaceContainerHighest }]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setSelectedGroupMembers(selectedGroupMembers.filter(id => id !== friend.id));
+                      } else {
+                        setSelectedGroupMembers([...selectedGroupMembers, friend.id]);
+                      }
+                    }}
+                  >
+                    <Image source={{ uri: friend.img }} style={styles.memberSelectImg} />
+                    <Text style={styles.memberSelectName}>{friend.name}</Text>
+                    {isSelected && <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
             <View style={styles.modalActions}>
               <TouchableOpacity onPress={() => setGroupModalVisible(false)} style={styles.modalCancelBtn}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
@@ -293,7 +662,7 @@ export default function SplitManagerScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* Custom Modal for Android/iOS Friend Addition */}
+      {/* Friend Addition Modal */}
       <Modal visible={isFriendModalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -330,16 +699,18 @@ export default function SplitManagerScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             
-            {friends.length === 0 ? (
+            {computedFriends.length === 0 ? (
               <Text style={styles.modalSub}>You have no friends to manage.</Text>
             ) : (
               <ScrollView style={{maxHeight: 300}}>
-                {friends.map(friend => (
+                {computedFriends.map(friend => (
                   <View key={friend.id} style={styles.memberSelectRow}>
                     <Image source={{ uri: friend.img }} style={styles.memberSelectImg} />
                     <View style={{flex: 1}}>
                       <Text style={styles.memberSelectName}>{friend.name}</Text>
-                      <Text style={{fontSize: 12, color: theme.colors.outline}}>Balance: {currencySymbol}{Math.abs(friend.amount || 0)}</Text>
+                      <Text style={{fontSize: 12, color: theme.colors.outline}}>
+                        Balance: {friend.effectiveAmount >= 0 ? '+' : '-'}{currencySymbol}{Math.abs(friend.effectiveAmount || 0).toFixed(2)}
+                      </Text>
                     </View>
                     <TouchableOpacity 
                       style={{padding: 8}}
@@ -347,7 +718,6 @@ export default function SplitManagerScreen({ navigation }) {
                         Alert.alert("Delete Friend", `Are you sure you want to delete ${friend.name}?`, [
                           { text: "Cancel", style: "cancel" },
                           { text: "Delete", style: "destructive", onPress: async () => {
-                              // In a real app we'd delete the doc from Firestore
                               import('firebase/firestore').then(({ deleteDoc, doc }) => {
                                 deleteDoc(doc(db, 'users', auth.currentUser.uid, 'friends', friend.id));
                               });
@@ -366,11 +736,66 @@ export default function SplitManagerScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* Summary Modal (Who owes who) */}
+      <Modal visible={isSummaryModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+              <Text style={styles.modalTitle}>
+                {summaryType === 'owedToYou' ? "Entities Owing You" : "Entities You Owe"}
+              </Text>
+              <TouchableOpacity onPress={() => setSummaryModalVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 20}}>
+              {/* Friends Section */}
+              <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 8, marginTop: 8}}>Friends</Text>
+              {computedFriends.filter(f => summaryType === 'owedToYou' ? f.effectiveAmount > 0.01 : f.effectiveAmount < -0.01).length === 0 ? (
+                <Text style={{fontSize: 14, color: theme.colors.outline, marginBottom: 16}}>No friends found.</Text>
+              ) : (
+                computedFriends.filter(f => summaryType === 'owedToYou' ? f.effectiveAmount > 0.01 : f.effectiveAmount < -0.01).map(friend => (
+                  <View key={friend.id} style={styles.memberSelectRow}>
+                    <Image source={{ uri: friend.img }} style={styles.memberSelectImg} />
+                    <View style={{flex: 1}}>
+                      <Text style={styles.memberSelectName}>{friend.name}</Text>
+                    </View>
+                    <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: summaryType === 'owedToYou' ? '#10b981' : (isDarkMode ? theme.colors.onSurface : '#000')}}>
+                      {currencySymbol}{Math.abs(friend.effectiveAmount).toFixed(2)}
+                    </Text>
+                  </View>
+                ))
+              )}
+
+              {/* Groups Section */}
+              <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 8, marginTop: 16}}>Groups</Text>
+              {groups.filter(g => summaryType === 'owedToYou' ? (g.balance || 0) > 0.01 : (g.balance || 0) < -0.01).length === 0 ? (
+                <Text style={{fontSize: 14, color: theme.colors.outline, marginBottom: 16}}>No groups found.</Text>
+              ) : (
+                groups.filter(g => summaryType === 'owedToYou' ? (g.balance || 0) > 0.01 : (g.balance || 0) < -0.01).map(group => (
+                  <View key={group.id} style={styles.memberSelectRow}>
+                    <View style={[styles.memberSelectImg, {backgroundColor: theme.colors.primaryContainer, justifyContent: 'center', alignItems: 'center'}]}>
+                      <Ionicons name={group.icon || 'people'} size={20} color={theme.colors.onPrimaryContainer} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text style={styles.memberSelectName}>{group.name}</Text>
+                    </View>
+                    <Text style={{fontSize: 16, fontFamily: theme.fonts.headlineBold, color: summaryType === 'owedToYou' ? '#10b981' : (isDarkMode ? theme.colors.onSurface : '#000')}}>
+                      {currencySymbol}{Math.abs(group.balance || 0).toFixed(2)}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-const getStyles = (theme) => StyleSheet.create({
+const getStyles = (theme, isDarkMode) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
     flexDirection: 'row',
@@ -383,14 +808,7 @@ const getStyles = (theme) => StyleSheet.create({
     borderBottomColor: theme.glass.panelElevated.borderColor,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  profilePic: {
-    width: 32, height: 32, borderRadius: 16,
-    borderWidth: 2, borderColor: theme.colors.primaryContainer,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: 12, backgroundColor: theme.colors.surfaceContainerHighest,
-    overflow: 'hidden',
-  },
-  headerTitle: { color: theme.colors.onSurface, fontSize: 20, fontFamily: theme.fonts.headline, letterSpacing: -0.5 },
+  headerTitle: { color: theme.colors.onSurface, fontSize: 28, fontFamily: theme.fonts.logo || theme.fonts.headline, letterSpacing: 0 },
   headerBtn: { padding: 4 },
   
   scrollContent: { padding: 24, paddingBottom: 120 },
@@ -595,7 +1013,7 @@ const getStyles = (theme) => StyleSheet.create({
   
   // Modal Styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: theme.colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
+  modalContent: { width: '85%', backgroundColor: theme.colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
   modalTitle: { fontSize: 20, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 8 },
   modalSub: { fontSize: 14, fontFamily: theme.fonts.body, color: theme.colors.outline, marginBottom: 16 },
   modalInput: { borderWidth: 1, borderColor: theme.colors.outlineVariant, borderRadius: 12, padding: 16, fontSize: 16, fontFamily: theme.fonts.body, color: theme.colors.onSurface, marginBottom: 24 },
@@ -606,6 +1024,6 @@ const getStyles = (theme) => StyleSheet.create({
   modalCreateText: { fontSize: 16, fontFamily: theme.fonts.bodyBold, color: theme.colors.onPrimary },
   
   memberSelectRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, marginBottom: 4 },
-  memberSelectImg: { width: 32, height: 32, borderRadius: 16, marginRight: 12 },
+  memberSelectImg: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },
   memberSelectName: { flex: 1, fontSize: 14, fontFamily: theme.fonts.bodyMedium, color: theme.colors.onSurface }
 });

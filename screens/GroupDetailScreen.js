@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform, Modal, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../firebaseConfig';
-import { collection, query, onSnapshot, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc, updateDoc, arrayUnion, addDoc, deleteDoc } from 'firebase/firestore';
 import * as Contacts from 'expo-contacts';
-import { Modal, TextInput, ScrollView, Image } from 'react-native';
 
 export default function GroupDetailScreen({ route, navigation }) {
   const { groupId, groupName } = route.params;
@@ -20,6 +19,14 @@ export default function GroupDetailScreen({ route, navigation }) {
   const [isViewMembersModalVisible, setViewMembersModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriendsToGroup, setSelectedFriendsToGroup] = useState([]);
+
+  // Contact Picker State
+  const [isContactPickerVisible, setContactPickerVisible] = useState(false);
+  const [deviceContacts, setDeviceContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -68,10 +75,33 @@ export default function GroupDetailScreen({ route, navigation }) {
   };
 
   const handleSyncContactToGroup = async () => {
-    try {
-      const contact = await Contacts.presentContactPickerAsync();
-      if (contact && contact.name) {
-        // 1. Add to friends list
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status === 'granted') {
+      setLoadingContacts(true);
+      setContactPickerVisible(true);
+      setContactSearchQuery('');
+      setTimeout(async () => {
+        const { data } = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.PhoneNumbers],
+        });
+        const validContacts = data.filter(c => c.name && c.name.length > 1 && !c.name.startsWith('*'));
+        validContacts.sort((a,b) => a.name.localeCompare(b.name));
+        setDeviceContacts(validContacts);
+        setFilteredContacts(validContacts);
+        setSelectedContacts([]);
+        setLoadingContacts(false);
+      }, 100);
+    } else {
+      Alert.alert("Permission required", "Allow contacts access in settings.");
+    }
+  };
+
+  const confirmAddContacts = async () => {
+    let addedCount = 0;
+    const newFriendIds = [];
+    for (const contactId of selectedContacts) {
+      const contact = deviceContacts.find(c => c.id === contactId);
+      if (contact) {
         const friendRef = await addDoc(collection(db, 'users', auth.currentUser.uid, 'friends'), {
           name: contact.name, 
           phone: contact.phoneNumbers?.[0]?.number || '',
@@ -79,20 +109,22 @@ export default function GroupDetailScreen({ route, navigation }) {
           status: 'Settled Up', 
           img: `https://i.pravatar.cc/150?u=${contact.name.replace(/ /g, '')}`
         });
-        
-        // 2. Add to group
-        const groupRef = doc(db, 'users', auth.currentUser.uid, 'groups', groupId);
-        await updateDoc(groupRef, {
-          memberIds: arrayUnion(friendRef.id),
-          members: (groupData?.members || 1) + 1
-        });
-
-        Alert.alert("Success", `Imported ${contact.name} and added them to the group!`);
-        setAddMemberModalVisible(false);
+        newFriendIds.push(friendRef.id);
+        addedCount++;
       }
-    } catch (error) {
-      Alert.alert("Error", "Could not open contact picker.");
     }
+    
+    if (newFriendIds.length > 0) {
+      const groupRef = doc(db, 'users', auth.currentUser.uid, 'groups', groupId);
+      await updateDoc(groupRef, {
+        memberIds: arrayUnion(...newFriendIds),
+        members: (groupData?.members || 1) + newFriendIds.length
+      });
+    }
+
+    setContactPickerVisible(false);
+    setAddMemberModalVisible(false);
+    Alert.alert("Success", `Imported ${addedCount} contacts and added them to the group!`);
   };
 
   const handleSettleUp = () => {
@@ -112,6 +144,29 @@ export default function GroupDetailScreen({ route, navigation }) {
             setGroupData({...groupData, balance: 0});
             Alert.alert("Success", "Debt marked as settled!");
         }}
+      ]
+    );
+  };
+
+  const handleDeleteGroup = () => {
+    Alert.alert(
+      "Delete Group",
+      "Are you sure you want to delete this group? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              const groupRef = doc(db, 'users', auth.currentUser.uid, 'groups', groupId);
+              await deleteDoc(groupRef);
+              navigation.goBack();
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete group');
+            }
+          }
+        }
       ]
     );
   };
@@ -147,9 +202,14 @@ export default function GroupDetailScreen({ route, navigation }) {
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => setAddMemberModalVisible(true)} style={styles.headerRight}>
-          <Ionicons name="person-add-outline" size={24} color={theme.colors.onSurface} />
-        </TouchableOpacity>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity onPress={() => setAddMemberModalVisible(true)} style={styles.headerRight}>
+            <Ionicons name="person-add-outline" size={24} color={theme.colors.onSurface} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDeleteGroup} style={styles.headerRight}>
+            <Ionicons name="trash-outline" size={24} color="#dc2626" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.balanceCard}>
@@ -279,6 +339,81 @@ export default function GroupDetailScreen({ route, navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* Contact Picker Modal */}
+      <Modal visible={isContactPickerVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: '90%', marginTop: 60 }]}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+              <Text style={styles.modalTitle}>Select Contacts</Text>
+              <TouchableOpacity onPress={() => setContactPickerVisible(false)}>
+                <Ionicons name="close" size={24} color={theme.colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Search contacts..."
+              placeholderTextColor={theme.colors.outline}
+              value={contactSearchQuery}
+              onChangeText={(text) => {
+                setContactSearchQuery(text);
+                if (text.trim() === '') {
+                  setFilteredContacts(deviceContacts);
+                } else {
+                  setFilteredContacts(deviceContacts.filter(c => c.name.toLowerCase().includes(text.toLowerCase())));
+                }
+              }}
+            />
+            
+            {loadingContacts ? (
+              <ActivityIndicator size="large" color={theme.colors.primary} style={{marginTop: 50}} />
+            ) : (
+              <>
+                <FlatList
+                  data={filteredContacts}
+                  keyExtractor={item => item.id}
+                  initialNumToRender={20}
+                  maxToRenderPerBatch={20}
+                  windowSize={5}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item: contact }) => {
+                    const isSelected = selectedContacts.includes(contact.id);
+                    return (
+                      <TouchableOpacity 
+                        style={[styles.memberSelectRow, isSelected && { backgroundColor: theme.colors.surfaceContainerHighest }]}
+                        onPress={() => {
+                          if (isSelected) {
+                            setSelectedContacts(selectedContacts.filter(id => id !== contact.id));
+                          } else {
+                            setSelectedContacts([...selectedContacts, contact.id]);
+                          }
+                        }}
+                      >
+                        <View style={[styles.memberSelectImg, { backgroundColor: theme.colors.primaryContainer, justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text style={{color: theme.colors.onPrimaryContainer, fontFamily: theme.fonts.headlineBold}}>{contact.name.charAt(0)}</Text>
+                        </View>
+                        <View style={{flex: 1}}>
+                          <Text style={styles.memberSelectName}>{contact.name}</Text>
+                          <Text style={{fontSize: 12, color: theme.colors.outline}}>{contact.phoneNumbers?.[0]?.number}</Text>
+                        </View>
+                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />}
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+                <TouchableOpacity 
+                  style={[styles.confirmAddBtn, { marginTop: 16, opacity: selectedContacts.length > 0 ? 1 : 0.5 }]} 
+                  disabled={selectedContacts.length === 0}
+                  onPress={confirmAddContacts}
+                >
+                  <Text style={styles.confirmAddBtnText}>Add {selectedContacts.length} Contacts to Group</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -332,5 +467,10 @@ const getStyles = (theme) => StyleSheet.create({
   friendImg: { width: 40, height: 40, borderRadius: 20, marginRight: 16 },
   friendName: { flex: 1, fontSize: 16, fontFamily: theme.fonts.bodyBold, color: theme.colors.onSurface },
   confirmAddBtn: { backgroundColor: theme.colors.primary, padding: 16, borderRadius: 16, alignItems: 'center', marginTop: 16 },
-  confirmAddBtnText: { fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onPrimary }
+  confirmAddBtnText: { fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onPrimary },
+  
+  memberSelectRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, marginBottom: 4 },
+  memberSelectImg: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },
+  memberSelectName: { flex: 1, fontSize: 14, fontFamily: theme.fonts.bodyMedium, color: theme.colors.onSurface },
+  modalInput: { borderWidth: 1, borderColor: theme.colors.outlineVariant, borderRadius: 12, padding: 16, fontSize: 16, fontFamily: theme.fonts.body, color: theme.colors.onSurface, marginBottom: 16 },
 });

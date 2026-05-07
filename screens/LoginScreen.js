@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, Image } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { auth, db } from '../firebaseConfig';
 import { useTheme } from '../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -181,16 +182,32 @@ export default function LoginScreen() {
           </View>
 
           {/* Login Card */}
-          <View style={[styles.glassPanel, { backgroundColor: isDarkMode ? 'rgba(30, 30, 35, 0.7)' : 'rgba(255, 255, 255, 0.7)' }]}>
+          <View style={styles.glassPanelWrapper}>
+            <BlurView 
+              intensity={40} 
+              tint={isDarkMode ? "dark" : "light"} 
+              experimentalBlurMethod="dimezisBlurView" 
+              style={styles.glassPanel}
+            >
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.4)' }]} />
             <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
-                {isLogin ? 'Welcome back' : 'Create Account'}
-              </Text>
-              <Text style={[styles.cardSubtitle, { color: colors.onSurfaceVariant }]}>
-                {isLogin === true ? 'Please enter your details to sign in' : 
-                 isLogin === false ? 'Please enter your details to sign up' : 
-                 'Enter your phone number to continue'}
-              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {isLogin === 'phone' && (
+                  <TouchableOpacity onPress={() => setIsLogin(true)} style={{marginRight: 16, padding: 4, backgroundColor: colors.surfaceContainer, borderRadius: 12}}>
+                    <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
+                  </TouchableOpacity>
+                )}
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                    {isLogin === true ? 'Welcome back' : isLogin === false ? 'Create Account' : 'Phone Login'}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { color: colors.onSurfaceVariant }]}>
+                    {isLogin === true ? 'Please enter your details to sign in' : 
+                     isLogin === false ? 'Please enter your details to sign up' : 
+                     'Enter your phone number to continue'}
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <View style={styles.form}>
@@ -344,7 +361,10 @@ export default function LoginScreen() {
                 onPress={handleGoogleSignIn}
                 activeOpacity={0.7}
               >
-                <Ionicons name="logo-google" size={20} color={colors.onSurface} style={{ marginRight: 12 }} />
+                <Image 
+                  source={{uri: 'https://img.icons8.com/color/48/000000/google-logo.png'}} 
+                  style={{ width: 24, height: 24, marginRight: 12 }} 
+                />
                 <Text style={[styles.googleButtonText, { color: colors.onSurface }]}>Sign in with Google</Text>
               </TouchableOpacity>
 
@@ -373,6 +393,7 @@ export default function LoginScreen() {
               </>
               )}
             </View>
+            </BlurView>
           </View>
 
           {/* Footer Links */}
@@ -420,34 +441,35 @@ const getStyles = (theme, colors) => StyleSheet.create({
     marginBottom: 40,
   },
   brandTitle: {
-    fontSize: 36,
-    fontFamily: theme.fonts.headlineBold,
-    letterSpacing: -0.5,
+    fontSize: 48,
+    fontFamily: theme.fonts.logo || theme.fonts.headlineBold,
+    letterSpacing: 0,
     marginBottom: 8,
   },
   brandSubtitle: {
     fontSize: 16,
     fontFamily: theme.fonts.bodyMedium,
   },
-  glassPanel: {
-    borderRadius: 24,
-    padding: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(20px)' } : {}),
+  glassPanelWrapper: {
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 24,
     elevation: 4,
+    borderRadius: 32,
+  },
+  glassPanel: {
+    borderRadius: 32,
+    padding: 32,
+    overflow: 'hidden',
   },
   cardHeader: {
     marginBottom: 32,
   },
   cardTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: theme.fonts.headlineBold,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   cardSubtitle: {
     fontSize: 14,

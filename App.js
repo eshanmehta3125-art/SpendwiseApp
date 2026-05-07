@@ -8,6 +8,7 @@ import { auth } from './firebaseConfig';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black } from '@expo-google-fonts/inter';
 import { PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from '@expo-google-fonts/plus-jakarta-sans';
+import { DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
 
 import OnboardingScreen from './screens/OnboardingScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -61,6 +62,7 @@ export default function App() {
     Inter_900Black,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
+    DancingScript_700Bold,
   });
 
   // Listen for Firebase login state

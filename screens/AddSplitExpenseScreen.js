@@ -7,12 +7,12 @@ import { auth, db } from '../firebaseConfig';
 import { addDoc, collection, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 
 export default function AddSplitExpenseScreen({ route, navigation }) {
-  const { groupId, groupName, groupMembers = [] } = route.params;
+  const { groupId, groupName, groupMembers = [], initialAmount = '', initialTitle = '' } = route.params;
   const { theme, currencySymbol } = useTheme();
   const styles = getStyles(theme);
 
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
+  const [title, setTitle] = useState(initialTitle);
+  const [amount, setAmount] = useState(initialAmount ? String(initialAmount) : '');
   const [splitType, setSplitType] = useState('Equal'); // Equal, Exact, Percentage
   const [percentageValue, setPercentageValue] = useState('');
   const [exactValue, setExactValue] = useState('');

@@ -10,13 +10,15 @@ import { BarChart } from 'react-native-gifted-charts';
 
 
 const getCategories = (theme) => [
-  { id: 'Food', icon: 'fast-food', color: theme.colors.tertiaryContainer },
-  { id: 'Dining', icon: 'restaurant', color: theme.colors.tertiaryContainer },
-  { id: 'Housing', icon: 'home', color: theme.colors.primaryContainer },
-  { id: 'Travel', icon: 'airplane', color: theme.colors.tertiary },
-  { id: 'Bills', icon: 'document-text', color: theme.colors.primary },
-  { id: 'Shopping', icon: 'cart', color: theme.colors.secondaryContainer },
-  { id: 'Others', icon: 'pricetag', color: theme.colors.outline },
+  { id: 'Dining', icon: 'restaurant', color: '#D28E8E' },
+  { id: 'Shopping', icon: 'bag-handle', color: '#9B8BBA' },
+  { id: 'Transport', icon: 'car', color: '#7CA5B8' },
+  { id: 'Housing', icon: 'home', color: '#8CAE8F' },
+  { id: 'Bills', icon: 'document-text', color: '#D8A47E' },
+  { id: 'Groceries', icon: 'cart', color: '#79B4A9' },
+  { id: 'Health', icon: 'medkit', color: '#D67B80' },
+  { id: 'Fun', icon: 'game-controller', color: '#D3B87A' },
+  { id: 'Travel', icon: 'airplane', color: '#7E8DA6' },
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -25,9 +27,11 @@ export default function HomeScreen({ navigation }) {
   const styles = getStyles(theme);
   
   const [transactions, setTransactions] = useState([]);
-  const [userName, setUserName] = useState('User');
-  const [profileImage, setProfileImage] = useState(null);
+  const [userName, setUserName] = useState(auth.currentUser?.displayName || 'User');
+  const [profileImage, setProfileImage] = useState(auth.currentUser?.photoURL || null);
   const [viewReceiptUrl, setViewReceiptUrl] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isDayTransactionsModalVisible, setDayTransactionsModalVisible] = useState(false);
   
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -73,7 +77,11 @@ export default function HomeScreen({ navigation }) {
     barData.push({
       value: dayTotal || 2, // minimum value so bars don't disappear completely
       label: dateStr,
-      frontColor: theme.colors.primaryContainer
+      frontColor: theme.colors.primaryContainer,
+      onPress: () => {
+        setSelectedDate(d);
+        setDayTransactionsModalVisible(true);
+      }
     });
   }
 
@@ -89,6 +97,13 @@ export default function HomeScreen({ navigation }) {
     const catData = getCategories(theme).find(c => c.id === catName);
     return catData ? catData.color : theme.colors.outline;
   };
+
+  const dayTransactions = selectedDate
+    ? transactions.filter(t => {
+        const tDate = t.timestamp ? (t.timestamp.toDate ? t.timestamp.toDate() : new Date(t.timestamp)) : null;
+        return tDate && tDate.toDateString() === selectedDate.toDateString();
+      })
+    : [];
 
   const handleDeleteTransaction = (id) => {
     if (transactions.length === 0) {
@@ -164,13 +179,13 @@ export default function HomeScreen({ navigation }) {
       {/* Top Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.profilePic}>
+          <TouchableOpacity style={styles.profilePic} onPress={() => navigation.navigate('Settings')}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={{ width: '100%', height: '100%' }} />
             ) : (
               <Ionicons name="person" size={24} color={theme.colors.onSurfaceVariant} />
             )}
-          </View>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>SpendWise</Text>
         </View>
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate('Notifications')}>
@@ -286,6 +301,60 @@ export default function HomeScreen({ navigation }) {
           {viewReceiptUrl && <Image source={{ uri: viewReceiptUrl }} style={{ width: '90%', height: '80%' }} resizeMode="contain" />}
         </View>
       </Modal>
+
+      {/* Daily Transactions Bottom Sheet Modal */}
+      <Modal visible={isDayTransactionsModalVisible} transparent={true} animationType="slide" onRequestClose={() => setDayTransactionsModalVisible(false)}>
+        <View style={styles.bottomSheetOverlay}>
+          <View style={styles.bottomSheetContainer}>
+            <View style={styles.bottomSheetHeader}>
+              <View>
+                <Text style={styles.bottomSheetTitle}>
+                  {selectedDate ? selectedDate.toLocaleDateString(undefined, { weekday: 'long' }) : ''}
+                </Text>
+                <Text style={{ fontSize: 13, fontFamily: theme.fonts.bodyMedium, color: theme.colors.outline, marginTop: 2 }}>
+                  {selectedDate ? selectedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setDayTransactionsModalVisible(false)}>
+                <Ionicons name="close-circle" size={32} color={theme.colors.outline} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              {dayTransactions.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="receipt-outline" size={48} color={theme.colors.outline} style={{ marginBottom: 12 }} />
+                  <Text style={styles.emptyText}>No transactions recorded on this day.</Text>
+                </View>
+              ) : (
+                dayTransactions.map((item, index) => {
+                  const isIncome = item.type === 'income';
+                  const catData = getCategories(theme).find(c => c.id === item.category) || getCategories(theme)[6];
+                  const iconColor = isIncome ? theme.colors.secondary : catData.color;
+                  return (
+                    <View key={item.id || index} style={[styles.txnItem, { paddingHorizontal: 0, borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant + '1A' }]}>
+                      <View style={styles.txnLeft}>
+                        <View style={[styles.txnIconBox, { backgroundColor: iconColor + '1A' }]}>
+                          <Ionicons name={isIncome ? 'briefcase' : catData.icon} size={24} color={iconColor} />
+                        </View>
+                        <View>
+                          <Text style={styles.txnTitle}>{item.desc || item.category || 'Transaction'}</Text>
+                          <Text style={styles.txnDate}>{item.date || 'Today'}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.txnRight}>
+                        <Text style={[styles.txnAmount, { color: isIncome ? theme.colors.secondary : theme.colors.onSurface }]}>
+                          {isIncome ? '+' : '-'}{currencySymbol}{Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -304,10 +373,8 @@ const getStyles = (theme) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: theme.glass.panelElevated.backgroundColor,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.glass.panelElevated.borderColor,
+    paddingVertical: 16,
+    backgroundColor: 'transparent',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -327,9 +394,9 @@ const getStyles = (theme) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.colors.onSurface,
-    fontSize: 20,
-    fontFamily: theme.fonts.headline,
-    letterSpacing: -0.5,
+    fontSize: 28,
+    fontFamily: theme.fonts.logo || theme.fonts.headline,
+    letterSpacing: 0,
   },
   headerBtn: {
     width: 40,
@@ -571,5 +638,42 @@ const getStyles = (theme) => StyleSheet.create({
     fontFamily: theme.fonts.bodyBold,
     textTransform: 'uppercase',
     letterSpacing: -0.5,
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetContainer: {
+    backgroundColor: theme.colors.surfaceContainerLowest,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    maxHeight: '75%',
+  },
+  bottomSheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outlineVariant,
+    paddingBottom: 16,
+  },
+  bottomSheetTitle: {
+    fontSize: 22,
+    fontFamily: theme.fonts.headlineBold,
+    color: theme.colors.onSurface,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: theme.fonts.bodyMedium,
+    color: theme.colors.outline,
+    textAlign: 'center',
   },
 });

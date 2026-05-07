@@ -19,14 +19,16 @@ const CATEGORIES = [
   { id: 'Fun', icon: 'game-controller' },
 ];
 
-const getCatData = (theme) => [
-  { id: 'Food', icon: 'fast-food', color: theme.colors.error },
-  { id: 'Travel', icon: 'airplane', color: theme.colors.tertiary },
-  { id: 'Bills', icon: 'document-text', color: theme.colors.primary },
-  { id: 'Fun', icon: 'game-controller', color: theme.colors.secondary },
-  { id: 'Shopping', icon: 'cart', color: theme.colors.outlineVariant },
-  { id: 'Transport', icon: 'car', color: '#06b6d4' },
-  { id: 'Others', icon: 'pricetag', color: theme.colors.outline },
+const getCategories = (theme) => [
+  { id: 'Dining', icon: 'restaurant', color: '#D28E8E' },
+  { id: 'Shopping', icon: 'bag-handle', color: '#9B8BBA' },
+  { id: 'Transport', icon: 'car', color: '#7CA5B8' },
+  { id: 'Housing', icon: 'home', color: '#8CAE8F' },
+  { id: 'Bills', icon: 'document-text', color: '#D8A47E' },
+  { id: 'Groceries', icon: 'cart', color: '#79B4A9' },
+  { id: 'Health', icon: 'medkit', color: '#D67B80' },
+  { id: 'Fun', icon: 'game-controller', color: '#D3B87A' },
+  { id: 'Travel', icon: 'airplane', color: '#7E8DA6' },
 ];
 
 export default function ReportsScreen({ navigation }) {
@@ -144,7 +146,7 @@ export default function ReportsScreen({ navigation }) {
       catSpend[t.category] = (catSpend[t.category] || 0) + t.amount;
     });
     pieData = Object.keys(catSpend).map(catName => {
-      const catDef = getCatData(theme).find(c => c.id === catName) || getCatData(theme)[6];
+      const catDef = getCategories(theme).find(c => c.id === catName) || { id: 'Others', icon: 'pricetag', color: '#95a5a6' };
       return {
         name: catName,
         population: catSpend[catName],
@@ -155,15 +157,15 @@ export default function ReportsScreen({ navigation }) {
     });
   }
 
-  const renderTxnRow = (item, index) => {
-    const catData = getCatData(theme).find(c => c.id === item.category) || getCatData(theme)[6];
+  const renderTxnRow = (item, index, isLast) => {
+    const catData = getCategories(theme).find(c => c.id === item.category) || { id: 'Others', icon: 'pricetag', color: '#95a5a6' };
     let dateStr = item.date;
     if (item.timestamp) {
       const d = item.timestamp.toDate ? item.timestamp.toDate() : new Date(item.timestamp);
       dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
     return (
-      <View key={item.id || index} style={styles.txnRow}>
+      <View key={item.id || index} style={[styles.txnRow, isLast && { borderBottomWidth: 0, paddingBottom: 0 }]}>
         <View style={styles.txnLeft}>
           <View style={[styles.txnIconBox, { backgroundColor: catData.color + '1A' }]}>
             <Ionicons name={catData.icon} size={20} color={catData.color} />
@@ -174,8 +176,8 @@ export default function ReportsScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.txnRight}>
-          <Text style={styles.txnDate}>{dateStr}</Text>
           <Text style={styles.txnAmount}>-{currencySymbol}{isPrivacyMode ? '***.**' : item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
+          <Text style={styles.txnDate}>{dateStr}</Text>
         </View>
       </View>
     );
@@ -311,7 +313,7 @@ export default function ReportsScreen({ navigation }) {
         <Animated.View entering={FadeInUp.delay(700).duration(800).springify()} style={styles.listCard}>
            <Text style={styles.listTitle}>Top Transactions</Text>
            {filteredExpenses.length > 0 ? 
-              filteredExpenses.sort((a,b) => b.amount - a.amount).slice(0,5).map((item, index) => renderTxnRow(item, index))
+              filteredExpenses.sort((a,b) => b.amount - a.amount).slice(0,5).map((item, index, arr) => renderTxnRow(item, index, index === arr.length - 1))
               : 
               <Text style={styles.emptyText}>No data for this filter.</Text>
            }
@@ -414,14 +416,14 @@ const getStyles = (theme) => StyleSheet.create({
   pieTitle: { fontSize: 18, fontWeight: '900', color: theme.colors.onSurface, marginBottom: 16 },
 
   listCard: { backgroundColor: theme.colors.surfaceContainerLowest, borderRadius: 32, padding: 24, marginBottom: 40 },
-  listTitle: { fontSize: 18, fontWeight: '900', color: theme.colors.onSurface, marginBottom: 16 },
-  txnRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceContainerHigh },
+  listTitle: { fontSize: 18, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 16 },
+  txnRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceContainerHigh },
   txnLeft: { flexDirection: 'row', alignItems: 'center' },
-  txnIconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  txnTitle: { fontSize: 15, fontWeight: 'bold', color: theme.colors.onSurface },
-  txnRef: { fontSize: 10, color: theme.colors.outline, marginTop: 2 },
-  txnRight: { alignItems: 'flex-end' },
-  txnDate: { fontSize: 12, color: theme.colors.outline, marginBottom: 4 },
-  txnAmount: { fontSize: 15, fontWeight: '900', color: theme.colors.onSurface },
+  txnIconBox: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  txnTitle: { fontSize: 15, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 2 },
+  txnRef: { fontSize: 12, fontFamily: theme.fonts.bodyMedium, color: theme.colors.onSurfaceVariant },
+  txnRight: { alignItems: 'flex-end', justifyContent: 'center' },
+  txnAmount: { fontSize: 16, fontFamily: theme.fonts.headlineBold, color: theme.colors.onSurface, marginBottom: 4 },
+  txnDate: { fontSize: 12, fontFamily: theme.fonts.bodyMedium, color: theme.colors.outline },
   emptyText: { textAlign: 'center', color: theme.colors.outline, padding: 20 }
 });

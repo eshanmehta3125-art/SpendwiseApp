@@ -391,10 +391,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   logoText: {
-    fontSize: 28,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontStyle: 'italic',
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontFamily: 'DancingScript_700Bold',
     color: '#111827',
   },
   skipButton: {

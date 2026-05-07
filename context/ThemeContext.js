@@ -9,8 +9,8 @@ export const ThemeProvider = ({ children }) => {
   
   // Default to system theme, but allow explicit override
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currency, setCurrency] = useState('USD');
-  const [currencySymbol, setCurrencySymbol] = useState('$');
+  const [currency, setCurrency] = useState('INR');
+  const [currencySymbol, setCurrencySymbol] = useState('₹');
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
 
   const currencyMap = {

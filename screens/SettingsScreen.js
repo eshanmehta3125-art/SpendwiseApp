@@ -12,9 +12,9 @@ export default function SettingsScreen({ navigation }) {
   const { theme, isDarkMode, toggleTheme, currency, updateCurrency } = useTheme();
   const styles = getStyles(theme, isDarkMode);
   
-  const [userName, setUserName] = useState('Alex Thompson');
-  const [email, setEmail] = useState('alex.t@wealthflow.io');
-  const [profileImage, setProfileImage] = useState(null);
+  const [userName, setUserName] = useState(auth.currentUser?.displayName || 'User');
+  const [email, setEmail] = useState(auth.currentUser?.email || 'user@example.com');
+  const [profileImage, setProfileImage] = useState(auth.currentUser?.photoURL || null);
   
   const [isAccountModalVisible, setAccountModalVisible] = useState(false);
   const [newName, setNewName] = useState('');
@@ -359,7 +359,7 @@ const getStyles = (theme, isDarkMode) => StyleSheet.create({
   },
   headerLeft: { flex: 1, alignItems: 'flex-start' },
   headerProfilePic: { width: 36, height: 36, borderRadius: 18, backgroundColor: isDarkMode ? theme.colors.surfaceContainerHighest : '#e2e8f0', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  headerTitle: { color: theme.colors.onSurface, fontSize: 20, fontFamily: theme.fonts.headline, textAlign: 'center', flex: 2, letterSpacing: -0.5 },
+  headerTitle: { color: theme.colors.onSurface, fontSize: 28, fontFamily: theme.fonts.logo || theme.fonts.headline, textAlign: 'center', flex: 2, letterSpacing: 0 },
   headerRight: { flex: 1, alignItems: 'flex-end' },
   
   scrollContent: { padding: 24, paddingBottom: 100 },
